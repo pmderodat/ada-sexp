@@ -1,0 +1,29 @@
+library project Sexp is
+
+   type Any_Build_Mode is ("debug", "prod");
+   Build_Mode : Any_Build_Mode := external ("SEXP_BUILD_MODE", "debug");
+
+   type Any_Library_Type is ("static", "static-pic", "relocatable");
+   Library_Kind : Any_Library_Type := external ("LIBRARY_TYPE", "static");
+
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj/" & Library_Kind & "." & Build_Mode;
+   for Library_Name use "sexp";
+   for Library_Dir use "lib/" & Library_Kind & "." & Build_Mode;
+   for Library_Kind use Library_Kind;
+
+   Compile_Switches := ("-gnatwa", "-g");
+   case Build_Mode is
+      when "debug" =>
+         Compile_Switches :=
+            Compile_Switches & ("-O0", "-gnata", "-gnatwe", "-gnatyg");
+      when "prod" =>
+         Compile_Switches :=
+            Compile_Switches & ("-Ofast");
+   end case;
+
+   package Compiler is
+      for Default_Switches ("Ada") use Compile_Switches;
+   end Compiler;
+
+end Sexp;
