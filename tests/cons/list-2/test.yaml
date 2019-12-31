@@ -1,0 +1,6 @@
+driver: decoder
+output: {"kind": "cons",
+         "car": {"kind": "symbol", "value": "a"},
+         "cdr": {"kind": "cons",
+                 "car": {"kind": "symbol", "value": "b"},
+                 "cdr": {"kind": "nil"}}}

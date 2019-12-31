@@ -6,9 +6,11 @@
 --  integer, cons, ...). Each value kind gets its constructor and getter(s).
 
 private with Ada.Finalization;
-private with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;
 
-package Sexp is
+package Sexp with Preelaborate is
+
+   package US renames Ada.Strings.Unbounded;
 
    type Sexp_Value_Kind is
      (Nil, Symbol, Integer_Kind, String_Kind, Cons, Boolean_Kind);
@@ -81,9 +83,38 @@ package Sexp is
       with Post => Create_Boolean'Result.Kind = Boolean_Kind;
    function As_Boolean (Value : Boolean_Value'Class) return Boolean;
 
-private
+   ------------------
+   -- Input/Output --
+   ------------------
 
-   package US renames Ada.Strings.Unbounded;
+   type Source_Location is record
+      Line, Column : Natural;
+   end record;
+
+   No_Location : constant Source_Location := (0, 0);
+
+   --  Result of S-Expression parsing. If parsing was successful, contains the
+   --  corresponding S-Expression value. Otherwise, contains an error message
+   --  that describes why parsing failed.
+
+   type Read_Result (Success : Boolean := True) is record
+      case Success is
+         when False =>
+            Message  : US.Unbounded_String;
+            Location : Source_Location;
+         when True =>
+            Value : Sexp_Value;
+      end case;
+   end record;
+
+   function Parse_String (Buffer : String) return Read_Result;
+   --  Parse the S-Expression in Buffer
+
+   function Format_Error (Result : Read_Result) return String
+      with Pre => not Result.Success;
+   --  Format the error information in Result into a GNU-style diagnostic
+
+private
 
    type Sexp_Access is access Sexp_Value;
    type Sexp_Data (Kind : Sexp_Value_Kind := Nil) is record

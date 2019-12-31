@@ -1,5 +1,8 @@
 with Ada.Unchecked_Deallocation;
 
+with Sexp.Generic_Parse;
+with Sexp.Utils;
+
 package body Sexp is
 
    function Allocate (Value : Sexp_Value) return Sexp_Access;
@@ -171,6 +174,69 @@ package body Sexp is
    begin
       return Value.Data.Boolean_Value;
    end As_Boolean;
+
+   ------------------
+   -- Parse_String --
+   ------------------
+
+   function Parse_String (Buffer : String) return Read_Result is
+      type Input_Stream is record
+         Next_Character : Positive;
+         --  Index of the next character in Buffer that Get must return
+      end record;
+
+      procedure Get
+        (Stream : in out Input_Stream;
+         EOF    : out Boolean;
+         Byte   : out Character);
+      --  Callback for Generic_Parse
+
+      ---------
+      -- Get --
+      ---------
+
+      procedure Get
+        (Stream : in out Input_Stream;
+         EOF    : out Boolean;
+         Byte   : out Character)
+      is
+      begin
+         if Stream.Next_Character > Buffer'Length then
+            EOF := True;
+         else
+            EOF := False;
+            Byte := Buffer (Stream.Next_Character);
+            Stream.Next_Character := Stream.Next_Character + 1;
+         end if;
+      end Get;
+
+      function Parse is new Sexp.Generic_Parse (Input_Stream, Get);
+
+      Stream : Input_Stream := (Next_Character => Buffer'First);
+   begin
+      return Parse (Stream);
+   end Parse_String;
+
+   ------------------
+   -- Format_Error --
+   ------------------
+
+   function Format_Error (Result : Read_Result) return String is
+      use US;
+      Formatted : Unbounded_String;
+   begin
+      if Result.Location.Line /= 0 then
+         Append (Formatted, Utils.Stripped_Image (Result.Location.Line));
+         Append (Formatted, ':');
+         if Result.Location.Column /= 0 then
+            Append (Formatted, Utils.Stripped_Image (Result.Location.Column));
+            Append (Formatted, ':');
+         end if;
+         Append (Formatted, ' ');
+      end if;
+      Append (Formatted, Result.Message);
+      return To_String (Formatted);
+   end Format_Error;
 
    ----------------
    -- Initialize --
