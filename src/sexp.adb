@@ -1,5 +1,6 @@
 with Ada.Unchecked_Deallocation;
 
+with Sexp.Generic_Dump;
 with Sexp.Generic_Parse;
 with Sexp.Utils;
 
@@ -9,6 +10,10 @@ package body Sexp is
    procedure Inc_Ref (Value : Sexp_Access);
    procedure Dec_Ref (Value : in out Sexp_Access);
    procedure Free is new Ada.Unchecked_Deallocation (Sexp_Value, Sexp_Access);
+
+   procedure Dump_To_String is new Sexp.Generic_Dump
+     (Output_Stream => US.Unbounded_String,
+      Put           => US.Append);
 
    --------------
    -- Allocate --
@@ -216,6 +221,17 @@ package body Sexp is
    begin
       return Parse (Stream);
    end Parse_String;
+
+   -------------------------
+   -- Serialize_As_String --
+   -------------------------
+
+   function Serialize_As_String (Value : Sexp.Sexp_Value) return String is
+      Result : US.Unbounded_String;
+   begin
+      Dump_To_String (Result, Value);
+      return US.To_String (Result);
+   end Serialize_As_String;
 
    ------------------
    -- Format_Error --

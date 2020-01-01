@@ -110,6 +110,9 @@ package Sexp with Preelaborate is
    function Parse_String (Buffer : String) return Read_Result;
    --  Parse the S-Expression in Buffer
 
+   function Serialize_As_String (Value : Sexp.Sexp_Value) return String;
+   --  Serialize the Value S-Expression as a string
+
    function Format_Error (Result : Read_Result) return String
       with Pre => not Result.Success;
    --  Format the error information in Result into a GNU-style diagnostic
