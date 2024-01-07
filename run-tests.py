@@ -98,7 +98,7 @@ class DecoderTestDriver(TestDriver):
             return Run([os.path.join(TESTSUITE_ROOT, self.encoder_program)],
                        input=f)
 
-    def run(self, previous_values):
+    def run(self, previous_values, slot):
         work_dir = self.test_env['working_dir']
 
         # Copy all test material to the working directory
@@ -205,7 +205,7 @@ class RunProgramTestDriver(TestDriver):
         self.add_fragment(dag, 'build')
         self.add_fragment(dag, 'run', after=['build'])
 
-    def build(self, previous_values):
+    def build(self, previous_values, slot):
         # Copy all test material to the working directory
         sync_tree(self.test_env['test_dir'], self.test_env['working_dir'])
 
@@ -230,7 +230,7 @@ class RunProgramTestDriver(TestDriver):
 
         return True
 
-    def run(self, previous_values):
+    def run(self, previous_values, slot):
         if not previous_values['build']:
             return
 
@@ -253,16 +253,18 @@ class RunProgramTestDriver(TestDriver):
 
 
 class Testsuite(e3.testsuite.Testsuite):
-    TEST_SUBDIR = 'tests'
-    DRIVERS = {'decoder': DecoderTestDriver,
-               'run-program': RunProgramTestDriver}
+    test_subdir = 'tests'
+    test_driver_map = {
+        'decoder': DecoderTestDriver,
+        'run-program': RunProgramTestDriver,
+    }
 
     @property
     def default_driver(self):
         return 'decoder'
 
-    def add_options(self):
-        self.main.argument_parser.add_argument(
+    def add_options(self, parser):
+        parser.add_argument(
             '--no-auto-path',
             action='store_true',
             help='Do not automatically add this repository to'
@@ -285,11 +287,4 @@ if __name__ == '__main__':
     sys.setrecursionlimit(10000)
 
     suite = Testsuite(os.path.dirname(__file__))
-    suite.testsuite_main()
-
-    # Display statistics about test results: number of tests per status
-    stats = [(str(name).split('.')[1], count)
-             for name, count in suite.test_status_counters.items()
-             if count]
-    for name, count in sorted(stats):
-        print('{: <8} {}'.format(name + ':', count))
+    sys.exit(suite.testsuite_main())
