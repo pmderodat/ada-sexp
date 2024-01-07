@@ -5,7 +5,6 @@ with Ada.Text_IO;
 
 with GNATCOLL.JSON;
 
-with Sexp;
 with Sexp.Generic_Dump;
 
 procedure Sexp.Test_Encode is
